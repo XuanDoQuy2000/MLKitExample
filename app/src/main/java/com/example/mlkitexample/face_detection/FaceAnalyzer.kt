@@ -5,10 +5,13 @@ import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 
-class FaceAnalyzer : ImageAnalysis.Analyzer {
+class FaceAnalyzer(
+    private val onFaceDetected : (List<Face>?) -> Unit
+) : ImageAnalysis.Analyzer {
 
     private val realTimeOpts = FaceDetectorOptions.Builder()
         .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
@@ -29,9 +32,7 @@ class FaceAnalyzer : ImageAnalysis.Analyzer {
 
             detector.process(inputImage)
                 .addOnSuccessListener { faces ->
-                    if (!faces.isNullOrEmpty()) {
-                        Log.d("AAAAA", "analyze: success ${faces[0].boundingBox.centerX()}")
-                    }
+                    onFaceDetected.invoke(faces)
                     imageProxy.close()
                 }
                 .addOnFailureListener {

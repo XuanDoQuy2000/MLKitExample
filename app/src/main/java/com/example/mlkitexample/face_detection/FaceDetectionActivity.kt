@@ -6,29 +6,34 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
-import android.util.Size
+import android.util.Rational
 import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
-import androidx.camera.core.UseCase
+import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.DrawStyle
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.example.mlkitexample.ui.theme.MLKitExampleTheme
+import com.example.mlkitexample.ui.theme.Teal200
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionRequired
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.mlkit.vision.face.Face
 import java.util.concurrent.Executor
 import kotlin.coroutines.*
 
@@ -104,13 +109,19 @@ fun CameraPreview(
 @Composable
 fun CameraFaceDectection(
     modifier: Modifier = Modifier,
-    cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    cameraSelector: CameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
 ) {
     Box(modifier = modifier) {
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
-        var previewUseCase by remember { mutableStateOf<UseCase>(Preview.Builder().build()) }
-        var previewView: PreviewView
+        var previewUseCase by remember {
+            mutableStateOf<UseCase>(
+                Preview.Builder()
+                    .setTargetResolution(android.util.Size(1080, 1920))
+                    .build()
+            )
+        }
+        var listFace by remember { mutableStateOf<List<Face>?>(emptyList()) }
         CameraPreview(
             modifier = Modifier.fillMaxSize(),
             onUseCase = {
@@ -118,12 +129,37 @@ fun CameraFaceDectection(
             }
         )
 
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            if (listFace.isNullOrEmpty()) return@Canvas
+            for (face in listFace!!) {
+                Log.d("ccc", "CameraFaceDectection: left = ${face.boundingBox.left} ")
+                Log.d("ccc", "CameraFaceDectection: top = ${face.boundingBox.top} ")
+                Log.d("ccc", "CameraFaceDectection: width = ${face.boundingBox.width()} ")
+                Log.d("ccc", "CameraFaceDectection: height = ${face.boundingBox.height()} ")
+                drawRect(
+                    color = Teal200,
+                    topLeft = Offset(
+                        face.boundingBox.left.toFloat(),
+                        face.boundingBox.top.toFloat()
+                    ),
+                    size = Size(
+                        face.boundingBox.width().toFloat(),
+                        face.boundingBox.height().toFloat()
+                    ),
+                    style = Stroke()
+                )
+            }
+        }
+
         val imageAnalysisUseCase = ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .setTargetResolution(android.util.Size(1080, 1920))
             .setImageQueueDepth(10)
             .build()
             .apply {
-                setAnalyzer(context.executor, FaceAnalyzer())
+                setAnalyzer(context.executor, FaceAnalyzer {
+                    listFace = it
+                })
             }
 
         LaunchedEffect(previewUseCase) {

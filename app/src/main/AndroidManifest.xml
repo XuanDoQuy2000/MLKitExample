@@ -21,6 +21,9 @@
             android:name=".face_detection.FaceDetectionActivity"
             android:exported="false" />
         <activity
+            android:name=".text_recognition.TextRecognitionActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
@@ -34,7 +37,7 @@
 
         <meta-data
             android:name="com.google.mlkit.vision.DEPENDENCIES"
-            android:value="face" />
+            android:value="face,ocr" />
 
     </application>
 

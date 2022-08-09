@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.mlkitexample.face_detection.FaceDetectionActivity
+import com.example.mlkitexample.text_recognition.TextRecognitionActivity
 import com.example.mlkitexample.ui.theme.MLKitExampleTheme
 
 class MainActivity : ComponentActivity() {
@@ -51,7 +52,10 @@ fun mainView() {
         }) {
             Text(text = "Face Detection")
         }
-        Button(onClick = { /*TODO*/ }) {
+        Button(onClick = {
+            val intent = Intent(context, TextRecognitionActivity::class.java)
+            context.startActivity(intent)
+        }) {
             Text(text = "Text Recognition")
         }
     }
